@@ -4,6 +4,7 @@ import streamlit as st
 
 # --- Simulation logic ---
 def simulate_werewolf_game(num_villagers, num_werewolves):
+    # Create and shuffle players
     players = [{'role': 'villager'} for _ in range(num_villagers)] + \
               [{'role': 'werewolf'} for _ in range(num_werewolves)]
     random.shuffle(players)
@@ -12,37 +13,39 @@ def simulate_werewolf_game(num_villagers, num_werewolves):
         villagers_alive = [p for p in players if p['role'] == 'villager']
         werewolves_alive = [p for p in players if p['role'] == 'werewolf']
 
-        if len(werewolves_alive) == 0:
+        # Win conditions
+        if not werewolves_alive:
             return 'villagers'
         if len(werewolves_alive) >= len(villagers_alive):
             return 'werewolves'
 
-        # Night: Werewolves kill one random villager
+        # --- NIGHT PHASE ---
+        # Werewolves kill one random villager
         if villagers_alive:
             victim = random.choice(villagers_alive)
             players.remove(victim)
 
-        # Recalculate alive players after night
+        # Re-evaluate remaining players
         if not players:
             break
 
-        # Day: Each player votes
+        # --- DAY PHASE ---
         votes = [0] * len(players)
         for i, voter in enumerate(players):
-            # Determine valid targets
+            # Determine valid vote targets
             if voter['role'] == 'villager':
-                options = [j for j, p in enumerate(players) if j != i]
+                options = [j for j in range(len(players)) if j != i]
             else:  # werewolf
-                options = [j for j, p in enumerate(players) if j != i and p['role'] != 'werewolf']
+                options = [j for j in range(len(players)) if j != i and players[j]['role'] != 'werewolf']
 
             if options:
-                choice = random.choice(options)
-                votes[choice] += 1
+                chosen = random.choice(options)
+                votes[chosen] += 1
 
-        # Eliminate the player with the most votes
+        # Eliminate player with most votes (with tie-break)
         max_votes = max(votes)
-        candidates = [i for i, v in enumerate(votes) if v == max_votes]
-        eliminated_index = random.choice(candidates)
+        tied = [i for i, v in enumerate(votes) if v == max_votes]
+        eliminated_index = random.choice(tied)
         players.pop(eliminated_index)
 
 def simulate_multiple_games(n_simulations, villagers, werewolves):
