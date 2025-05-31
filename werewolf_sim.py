@@ -22,8 +22,44 @@ def simulate_werewolf_game(num_villagers, num_werewolves):
             players.pop(random.choice(villagers))
 
         # Day: Random vote to eliminate one player
-        if players:
-            players.pop(random.randint(0, len(players) - 1))
+        def simulate_werewolf_game(num_villagers, num_werewolves):
+            players = ['villager'] * num_villagers + ['werewolf'] * num_werewolves
+            random.shuffle(players)
+
+            while True:
+                num_villagers = players.count('villager')
+                num_werewolves = players.count('werewolf')
+
+                if num_werewolves == 0:
+                    return 'villagers'
+                if num_werewolves >= num_villagers:
+                    return 'werewolves'
+
+                # Night: Werewolves kill one villager
+                villagers = [i for i, role in enumerate(players) if role == 'villager']
+                if villagers:
+                    players.pop(random.choice(villagers))
+
+                # Day: Simulate voting
+                if players:
+                    votes = [0] * len(players)
+                    for i, voter_role in enumerate(players):
+                        # Determine valid vote targets
+                        if voter_role == 'villager':
+                            options = [j for j in range(len(players)) if j != i]
+                        else:  # werewolf
+                            options = [j for j in range(len(players)) if j != i and players[j] != 'werewolf']
+
+                        if options:
+                            vote = random.choice(options)
+                            votes[vote] += 1
+
+                    # Eliminate the player with the most votes
+                    max_votes = max(votes)
+                    candidates = [i for i, v in enumerate(votes) if v == max_votes]
+                    eliminated = random.choice(candidates)
+                    players.pop(eliminated)
+
 
 def simulate_multiple_games(n_simulations, villagers, werewolves):
     results = {'villagers': 0, 'werewolves': 0}
