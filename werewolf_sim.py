@@ -4,62 +4,46 @@ import streamlit as st
 
 # --- Simulation logic ---
 def simulate_werewolf_game(num_villagers, num_werewolves):
-    players = ['villager'] * num_villagers + ['werewolf'] * num_werewolves
+    players = [{'role': 'villager'} for _ in range(num_villagers)] + \
+              [{'role': 'werewolf'} for _ in range(num_werewolves)]
     random.shuffle(players)
 
     while True:
-        num_villagers = players.count('villager')
-        num_werewolves = players.count('werewolf')
+        villagers_alive = [p for p in players if p['role'] == 'villager']
+        werewolves_alive = [p for p in players if p['role'] == 'werewolf']
 
-        if num_werewolves == 0:
+        if len(werewolves_alive) == 0:
             return 'villagers'
-        if num_werewolves >= num_villagers:
+        if len(werewolves_alive) >= len(villagers_alive):
             return 'werewolves'
 
-        # Night: Werewolves kill one villager
-        villagers = [i for i, role in enumerate(players) if role == 'villager']
-        if villagers:
-            players.pop(random.choice(villagers))
+        # Night: Werewolves kill one random villager
+        if villagers_alive:
+            victim = random.choice(villagers_alive)
+            players.remove(victim)
 
-        # Day: Random vote to eliminate one player
-        def simulate_werewolf_game(num_villagers, num_werewolves):
-            players = ['villager'] * num_villagers + ['werewolf'] * num_werewolves
-            random.shuffle(players)
+        # Recalculate alive players after night
+        if not players:
+            break
 
-            while True:
-                num_villagers = players.count('villager')
-                num_werewolves = players.count('werewolf')
+        # Day: Each player votes
+        votes = [0] * len(players)
+        for i, voter in enumerate(players):
+            # Determine valid targets
+            if voter['role'] == 'villager':
+                options = [j for j, p in enumerate(players) if j != i]
+            else:  # werewolf
+                options = [j for j, p in enumerate(players) if j != i and p['role'] != 'werewolf']
 
-                if num_werewolves == 0:
-                    return 'villagers'
-                if num_werewolves >= num_villagers:
-                    return 'werewolves'
+            if options:
+                choice = random.choice(options)
+                votes[choice] += 1
 
-                # Night: Werewolves kill one villager
-                villagers = [i for i, role in enumerate(players) if role == 'villager']
-                if villagers:
-                    players.pop(random.choice(villagers))
-
-                # Day: Simulate voting
-                if players:
-                    votes = [0] * len(players)
-                    for i, voter_role in enumerate(players):
-                        # Determine valid vote targets
-                        if voter_role == 'villager':
-                            options = [j for j in range(len(players)) if j != i]
-                        else:  # werewolf
-                            options = [j for j in range(len(players)) if j != i and players[j] != 'werewolf']
-
-                        if options:
-                            vote = random.choice(options)
-                            votes[vote] += 1
-
-                    # Eliminate the player with the most votes
-                    max_votes = max(votes)
-                    candidates = [i for i, v in enumerate(votes) if v == max_votes]
-                    eliminated = random.choice(candidates)
-                    players.pop(eliminated)
-
+        # Eliminate the player with the most votes
+        max_votes = max(votes)
+        candidates = [i for i, v in enumerate(votes) if v == max_votes]
+        eliminated_index = random.choice(candidates)
+        players.pop(eliminated_index)
 
 def simulate_multiple_games(n_simulations, villagers, werewolves):
     results = {'villagers': 0, 'werewolves': 0}
